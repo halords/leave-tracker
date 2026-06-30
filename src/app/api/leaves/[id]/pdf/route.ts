@@ -108,6 +108,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // Checkboxes
     const typeMap: Record<string, string> = {
       "Vacation": "vl",
+      "Monetization": "vl",
       "Mandatory/Forced": "fl",
       "Sick": "sl",
       "Maternity": "ml",

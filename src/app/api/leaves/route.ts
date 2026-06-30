@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
     // Handle balance deductions
-    if (leaveType === "Vacation") {
+    if (leaveType === "Vacation" || leaveType === "Monetization") {
       if (profile.vacationBalance < workingDays) {
         return NextResponse.json({ error: "Insufficient vacation balance" }, { status: 400 });
       }

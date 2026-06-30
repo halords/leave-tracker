@@ -35,7 +35,8 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
     e.preventDefault();
     setLoading(true);
 
-    if (!formData.startDate || !formData.endDate) {
+    const isMone = formData.isMonetization || formData.leaveType === "Monetization";
+    if (!isMone && (!formData.startDate || !formData.endDate)) {
       alert("Please select dates.");
       setLoading(false);
       return;
@@ -59,24 +60,29 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
       return;
     }
 
-    const start = new Date(formData.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-    const end = new Date(formData.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    
-    // Check if same month
-    const startObj = new Date(formData.startDate);
-    const endObj = new Date(formData.endDate);
-    
-    let datesApplied = `${start}-${end}`;
-    if (startObj.getMonth() === endObj.getMonth() && startObj.getFullYear() === endObj.getFullYear()) {
-      if (startObj.getDate() === endObj.getDate()) {
-        datesApplied = end;
-      } else {
-        datesApplied = `${startObj.toLocaleDateString('en-US', { month: 'long' })} ${startObj.getDate()}-${endObj.getDate()}, ${endObj.getFullYear()}`;
+    let datesApplied = "";
+    if (isMone && (!formData.startDate || !formData.endDate)) {
+      datesApplied = "N/A (Monetization)";
+    } else {
+      const start = new Date(formData.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      const end = new Date(formData.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      
+      const startObj = new Date(formData.startDate);
+      const endObj = new Date(formData.endDate);
+      
+      datesApplied = `${start}-${end}`;
+      if (startObj.getMonth() === endObj.getMonth() && startObj.getFullYear() === endObj.getFullYear()) {
+        if (startObj.getDate() === endObj.getDate()) {
+          datesApplied = end;
+        } else {
+          datesApplied = `${startObj.toLocaleDateString('en-US', { month: 'long' })} ${startObj.getDate()}-${endObj.getDate()}, ${endObj.getFullYear()}`;
+        }
       }
     }
 
     const payload = {
       ...formData,
+      isMonetization: formData.isMonetization || formData.leaveType === "Monetization",
       profileId: profile.id,
       datesApplied,
     };
@@ -133,38 +139,40 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    required
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
-                    value={formData.startDate || ""}
-                    onChange={(e) => {
-                      const newStart = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        startDate: newStart,
-                        // Seamless: if end date is missing or earlier than new start date, update it automatically
-                        endDate: (!prev.endDate || prev.endDate < newStart) ? newStart : prev.endDate
-                      }));
-                    }}
-                  />
+              {!(formData.isMonetization || formData.leaveType === "Monetization") && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      required={!(formData.isMonetization || formData.leaveType === "Monetization")}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                      value={formData.startDate || ""}
+                      onChange={(e) => {
+                        const newStart = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          startDate: newStart,
+                          // Seamless: if end date is missing or earlier than new start date, update it automatically
+                          endDate: (!prev.endDate || prev.endDate < newStart) ? newStart : prev.endDate
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      required={!(formData.isMonetization || formData.leaveType === "Monetization")}
+                      min={formData.startDate || new Date().toISOString().split('T')[0]}
+                      className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
+                      value={formData.endDate || ""}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    required
-                    min={formData.startDate || new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
-                    value={formData.endDate || ""}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  />
-                </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Leave Type</label>
@@ -174,6 +182,7 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
                   onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
                 >
                   <option value="Vacation">Vacation Leave</option>
+                  <option value="Monetization">Monetization</option>
                   {profile.forcedBalance > 0 && <option value="Mandatory/Forced">Mandatory/Forced Leave</option>}
                   <option value="Sick">Sick Leave</option>
                   {profile.gender !== "Male" && <option value="Maternity">Maternity Leave</option>}
@@ -212,7 +221,7 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
                 </div>
               )}
 
-              {["Vacation", "Special Privilege", "Wellness", "Mandatory/Forced"].includes(formData.leaveType) && (
+              {!formData.isMonetization && ["Vacation", "Special Privilege", "Wellness", "Mandatory/Forced"].includes(formData.leaveType) && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">Location Context</label>
                   <div className="flex space-x-6">
