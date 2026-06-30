@@ -1,0 +1,64 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+model Profile {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  passwordHash      String
+  role              String   @default("USER")
+  
+  firstName         String?
+  middleName        String?
+  lastName          String?
+  position          String?
+  salary            String?
+  office            String?
+  signatoryName     String?
+  signatoryPos      String?
+  recName           String?
+  recPos            String?
+
+  vacationBalance   Float    @default(15.00)
+  sickBalance       Float    @default(15.00)
+  privilegeBalance  Float    @default(3.00)
+  wellnessBalance   Float    @default(5.00)
+  forcedBalance     Float    @default(5.00)
+  gender            String?
+  lastAnnualResetYear Int?
+  lastIncrementDate DateTime @default(now())
+  leaves            Leave[]
+  leaveIncrements   LeaveIncrement[]
+}
+
+model Leave {
+  id           String   @id @default(cuid())
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id])
+  leaveType    String   // 'Vacation', 'Sick', 'Forced', 'SPL', etc.
+  workingDays    Int
+  datesApplied   String   // e.g. "July 5-7, 2026"
+  leaveDetails   String?  // 'inpatient', 'outpatient', 'within', 'abroad'
+  isMonetization Boolean  @default(false)
+  dateFiled      DateTime @default(now())
+  createdAt      DateTime @default(now())
+}
+
+model LeaveIncrement {
+  id               String   @id @default(cuid())
+  profileId        String
+  profile          Profile  @relation(fields: [profileId], references: [id])
+  description      String
+  vacationAdded    Float    @default(0)
+  sickAdded        Float    @default(0)
+  privilegeAdded   Float    @default(0)
+  wellnessAdded    Float    @default(0)
+  forcedAdded      Float    @default(0)
+  vacationDeducted Float    @default(0)
+  createdAt        DateTime @default(now())
+}
