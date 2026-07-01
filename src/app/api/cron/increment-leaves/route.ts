@@ -28,8 +28,10 @@ export async function GET(request: Request) {
         lastIncrementDate: new Date(),
       };
 
-      // Reset annual leaves if it's a new year
-      if (!profile.lastAnnualResetYear || profile.lastAnnualResetYear < currentYear) {
+      const currentMonth = new Date().getMonth(); // 0 is January
+
+      // Reset annual leaves if it's a new year AND the current month is January
+      if (currentMonth === 0 && (!profile.lastAnnualResetYear || profile.lastAnnualResetYear < currentYear)) {
         description = "Annual Reset & Monthly Increment";
         
         // If they didn't use all their Forced Leave, deduct the remainder from Vacation Leave
@@ -45,6 +47,10 @@ export async function GET(request: Request) {
         dataToUpdate.privilegeBalance = 3.00;
         dataToUpdate.wellnessBalance = 5.00;
         dataToUpdate.forcedBalance = 5.00;
+        dataToUpdate.lastAnnualResetYear = currentYear;
+      } else if (!profile.lastAnnualResetYear) {
+        // If it's not January, but lastAnnualResetYear is null (e.g. newly created user or app just deployed), 
+        // we should just set the year so it doesn't trigger unexpectedly next month
         dataToUpdate.lastAnnualResetYear = currentYear;
       }
 

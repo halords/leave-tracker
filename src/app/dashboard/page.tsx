@@ -1,9 +1,24 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import LeaveFormModal from "@/components/LeaveFormModal";
 import HistoryTabs from "@/components/HistoryTabs";
 import LogoutButton from "@/components/LogoutButton";
+
+const getCachedProfile = unstable_cache(
+  async (email: string) => {
+    return prisma.profile.findUnique({
+      where: { email },
+      include: { 
+        leaves: { orderBy: { dateFiled: 'desc' } },
+        leaveIncrements: { orderBy: { createdAt: 'desc' } }
+      },
+    });
+  },
+  ['profile-data'],
+  { tags: ['profile'] }
+);
 
 export default async function DashboardPage() {
   const session = await getServerSession();
@@ -12,13 +27,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const profile = await prisma.profile.findUnique({
-    where: { email: session.user.email },
-    include: { 
-      leaves: { orderBy: { dateFiled: 'desc' } },
-      leaveIncrements: { orderBy: { createdAt: 'desc' } }
-    },
-  });
+  const profile = await getCachedProfile(session.user.email);
 
   if (!profile) {
     return (

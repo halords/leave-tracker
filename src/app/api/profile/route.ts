@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 
 export async function PUT(req: NextRequest) {
@@ -29,6 +30,7 @@ export async function PUT(req: NextRequest) {
       },
     });
 
+    revalidateTag("profile");
     return NextResponse.json(updatedProfile);
   } catch (error) {
     console.error(error);

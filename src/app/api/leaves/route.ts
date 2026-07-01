@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 import { getServerSession } from "next-auth";
 
 export async function POST(req: NextRequest) {
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    revalidateTag("profile");
     return NextResponse.json(leave);
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });

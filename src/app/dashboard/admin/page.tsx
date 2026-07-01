@@ -1,7 +1,18 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import AdminUsersList from "./AdminUsersList";
+
+const getCachedUsers = unstable_cache(
+  async () => {
+    return prisma.profile.findMany({
+      orderBy: { email: 'asc' }
+    });
+  },
+  ['all-users'],
+  { tags: ['users'] }
+);
 
 export default async function AdminPage() {
   const session = await getServerSession();
@@ -19,9 +30,7 @@ export default async function AdminPage() {
   }
 
   // Fetch all users
-  const allUsers = await prisma.profile.findMany({
-    orderBy: { email: 'asc' }
-  });
+  const allUsers = await getCachedUsers();
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">

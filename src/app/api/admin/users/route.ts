@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache";
 import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
     // Don't send hash back
     const { passwordHash: _, ...userSafe } = newUser;
 
+    revalidateTag("users");
     return NextResponse.json({ success: true, user: userSafe }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating user:", error);
