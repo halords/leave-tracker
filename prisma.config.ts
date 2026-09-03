@@ -11,7 +11,7 @@ const libsql = createClient({
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
-  // @ts-ignore
+  // @ts-expect-error adapter type mismatch
   adapter: new PrismaLibSql(libsql),
   datasource: {
     url: env("DATABASE_URL"),

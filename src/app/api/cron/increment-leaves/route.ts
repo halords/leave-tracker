@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
   try {
@@ -15,15 +16,17 @@ export async function GET(request: Request) {
     // Calculate increments
     for (const profile of profiles) {
       let description = "Monthly Increment";
-      let vacationAdded = 1.25;
-      let sickAdded = 1.25;
+      const vacationAdded = 1.25;
+      const sickAdded = 1.25;
       let privilegeAdded = 0;
       let wellnessAdded = 0;
       let forcedAdded = 0;
       let vacationDeducted = 0;
 
-      const dataToUpdate: any = {
-        vacationBalance: profile.vacationBalance + vacationAdded,
+      let newVacationBalance = profile.vacationBalance + vacationAdded;
+
+      const dataToUpdate: Prisma.ProfileUpdateInput = {
+        vacationBalance: newVacationBalance,
         sickBalance: profile.sickBalance + sickAdded,
         lastIncrementDate: new Date(),
       };
@@ -37,7 +40,8 @@ export async function GET(request: Request) {
         // If they didn't use all their Forced Leave, deduct the remainder from Vacation Leave
         if (profile.forcedBalance && profile.forcedBalance > 0) {
           vacationDeducted = profile.forcedBalance;
-          dataToUpdate.vacationBalance = dataToUpdate.vacationBalance - vacationDeducted;
+          newVacationBalance = newVacationBalance - vacationDeducted;
+          dataToUpdate.vacationBalance = newVacationBalance;
         }
 
         privilegeAdded = 3.00 - profile.privilegeBalance; // technical diff for tracking

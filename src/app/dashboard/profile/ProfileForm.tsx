@@ -3,7 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ProfileForm({ profile }: { profile: any }) {
+interface ProfileFormProps {
+  profile: {
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
+    position?: string | null;
+    salary?: string | null;
+    gender?: string | null;
+  };
+}
+
+export default function ProfileForm({ profile }: ProfileFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);

@@ -48,12 +48,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Don't send hash back
     const { passwordHash: _, ...userSafe } = newUser;
+    void _;
 
     revalidateTag("users", "max");
     return NextResponse.json({ success: true, user: userSafe }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating user:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

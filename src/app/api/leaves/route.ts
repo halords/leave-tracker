@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
     revalidateTag("profile", "max");
     return NextResponse.json(leave);
   } catch (error) {
+    console.error("Error creating leave:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

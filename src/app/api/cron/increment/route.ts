@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: "Balances updated safely (+1.25)" });
   } catch (error) {
+    console.error("Cron Error:", error);
     return NextResponse.json({ success: false, error: "Cron transactional update failed" }, { status: 500 });
   }
 }

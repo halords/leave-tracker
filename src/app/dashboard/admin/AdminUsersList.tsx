@@ -3,9 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AdminUsersList({ initialUsers }: { initialUsers: any[] }) {
+interface AdminUser {
+  id: string;
+  email: string;
+  role: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  vacationBalance: number;
+  sickBalance: number;
+  forcedBalance: number;
+  privilegeBalance?: number;
+  wellnessBalance?: number;
+}
+
+export default function AdminUsersList({ initialUsers }: { initialUsers: AdminUser[] }) {
   const router = useRouter();
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState<AdminUser[]>(initialUsers);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [vacationBalance, setVacationBalance] = useState("15");
@@ -51,8 +64,8 @@ export default function AdminUsersList({ initialUsers }: { initialUsers: any[] }
       setPassword("");
       setIsModalOpen(false); // close modal on success
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }

@@ -34,7 +34,7 @@ export default async function PrintPage({ params }: { params: Promise<{ id: stri
 
       <div className="w-full h-screen border border-slate-200 rounded-lg overflow-hidden bg-slate-100 shadow-sm">
         <iframe
-          src={`/api/leaves/${id}/pdf?t=${Date.now()}`}
+          src={`/api/leaves/${id}/pdf`}
           className="w-full h-full border-none"
           title="Civil Service Form No. 6"
         />

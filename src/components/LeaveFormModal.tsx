@@ -1,9 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function LeaveFormModal({ profile }: { profile: any }) {
+interface LeaveProfile {
+  id: string;
+  gender?: string | null;
+  forcedBalance: number;
+  wellnessBalance: number;
+  privilegeBalance: number;
+}
+
+export default function LeaveFormModal({ profile }: { profile: LeaveProfile }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -13,23 +21,41 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
     datesApplied: "",
     startDate: "",
     endDate: "",
-    leaveDetails: "",
+    leaveDetails: "within",
     isMonetization: false,
   });
 
-  useEffect(() => {
-    if (["Vacation", "Special Privilege", "Wellness", "Mandatory/Forced"].includes(formData.leaveType)) {
-      if (formData.leaveDetails !== "within" && formData.leaveDetails !== "abroad") {
-        setFormData((prev) => ({ ...prev, leaveDetails: "within" }));
-      }
-    } else if (formData.leaveType === "Sick") {
-      if (formData.leaveDetails !== "inpatient" && formData.leaveDetails !== "outpatient") {
-        setFormData((prev) => ({ ...prev, leaveDetails: "outpatient" }));
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, leaveDetails: "" }));
+  const handleLeaveTypeChange = (newType: string) => {
+    let newDetails = "";
+    if (["Vacation", "Special Privilege", "Wellness", "Mandatory/Forced"].includes(newType)) {
+      newDetails = "within";
+    } else if (newType === "Sick") {
+      newDetails = "outpatient";
     }
-  }, [formData.leaveType]);
+    setFormData((prev) => ({
+      ...prev,
+      leaveType: newType,
+      leaveDetails: newDetails,
+    }));
+  };
+
+  const handleDateChange = (startDate: string, endDate: string) => {
+    let workingDays = formData.workingDays;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        workingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      }
+    }
+    setFormData((prev) => ({
+      ...prev,
+      startDate,
+      endDate,
+      workingDays,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,26 +121,21 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
 
     if (res.ok) {
       setIsOpen(false);
-      setFormData({ leaveType: "Vacation", workingDays: 1, datesApplied: "", startDate: "", endDate: "", leaveDetails: "", isMonetization: false } as any);
+      setFormData({
+        leaveType: "Vacation",
+        workingDays: 1,
+        datesApplied: "",
+        startDate: "",
+        endDate: "",
+        leaveDetails: "within",
+        isMonetization: false,
+      });
       router.refresh();
     } else {
       alert("Failed to submit leave. Check balances.");
     }
     setLoading(false);
   };
-
-  useEffect(() => {
-    if (formData.startDate && formData.endDate) {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
-      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end >= start) {
-        // Compute difference in days, inclusive
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-        setFormData((prev) => ({ ...prev, workingDays: diffDays }));
-      }
-    }
-  }, [formData.startDate, formData.endDate]);
 
   return (
     <>
@@ -151,12 +172,8 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
                       value={formData.startDate || ""}
                       onChange={(e) => {
                         const newStart = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          startDate: newStart,
-                          // Seamless: if end date is missing or earlier than new start date, update it automatically
-                          endDate: (!prev.endDate || prev.endDate < newStart) ? newStart : prev.endDate
-                        }));
+                        const newEnd = (!formData.endDate || formData.endDate < newStart) ? newStart : formData.endDate;
+                        handleDateChange(newStart, newEnd);
                       }}
                     />
                   </div>
@@ -168,7 +185,7 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
                       min={formData.startDate || new Date().toISOString().split('T')[0]}
                       className="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm"
                       value={formData.endDate || ""}
-                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      onChange={(e) => handleDateChange(formData.startDate, e.target.value)}
                     />
                   </div>
                 </div>
@@ -179,7 +196,7 @@ export default function LeaveFormModal({ profile }: { profile: any }) {
                 <select
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   value={formData.leaveType}
-                  onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+                  onChange={(e) => handleLeaveTypeChange(e.target.value)}
                 >
                   <option value="Vacation">Vacation Leave</option>
                   <option value="Monetization">Monetization</option>

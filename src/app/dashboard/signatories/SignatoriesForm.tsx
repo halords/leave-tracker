@@ -3,7 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SignatoriesForm({ profile }: { profile: any }) {
+interface SignatoriesFormProps {
+  profile: {
+    office?: string | null;
+    recName?: string | null;
+    recPos?: string | null;
+    signatoryName?: string | null;
+    signatoryPos?: string | null;
+  };
+}
+
+export default function SignatoriesForm({ profile }: SignatoriesFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);

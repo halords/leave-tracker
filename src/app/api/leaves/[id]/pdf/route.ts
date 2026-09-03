@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import fs from "fs";
 import path from "path";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, PDFFont, degrees } from "pdf-lib";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const pages = pdfDoc.getPages();
     const page = pages[0];
 
-    const drawCenteredTextInField = (fieldName: string, text: string, font: any, size: number) => {
+    const drawCenteredTextInField = (fieldName: string, text: string, font: PDFFont, size: number) => {
       if (!text) return;
       const field = form.getTextField(fieldName);
       const widgets = field.acroField.getWidgets();
@@ -184,7 +184,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         font: helveticaBold,
         color: rgb(0.85, 0.15, 0.15),
         opacity: 0.35,
-        rotate: { angle: 35, type: 0 as any },
+        rotate: degrees(35),
       });
     }
 

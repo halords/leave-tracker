@@ -53,7 +53,7 @@ export async function POST(
     const leaveType = leave.leaveType;
 
     // Refund logic based on leave type
-    const profileUpdateData: any = {};
+    const profileUpdateData: Record<string, number> = {};
 
     if (leaveType === "Vacation" || leaveType === "Monetization") {
       profileUpdateData.vacationBalance = targetProfile.vacationBalance + workingDays;
@@ -93,7 +93,7 @@ export async function POST(
       message: "Leave successfully cancelled and balances refunded.",
       leave: updatedLeave,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error cancelling leave:", error);
     return NextResponse.json({ error: "Failed to cancel leave" }, { status: 500 });
   }

@@ -4,10 +4,36 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export default function HistoryTabs({ leaves, leaveIncrements }: { leaves: any[], leaveIncrements: any[] }) {
+interface LeaveItem {
+  id: string;
+  leaveType: string;
+  datesApplied: string;
+  workingDays: number;
+  dateFiled: Date | string;
+  isMonetization: boolean;
+  status: string;
+  cancellationReason?: string | null;
+}
+
+interface LeaveIncrementItem {
+  id: string;
+  description: string;
+  vacationAdded: number;
+  sickAdded: number;
+  vacationDeducted: number;
+  createdAt: Date | string;
+}
+
+export default function HistoryTabs({ 
+  leaves, 
+  leaveIncrements 
+}: { 
+  leaves: LeaveItem[]; 
+  leaveIncrements: LeaveIncrementItem[]; 
+}) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"leave" | "increment">("leave");
-  const [selectedLeaveToCancel, setSelectedLeaveToCancel] = useState<any | null>(null);
+  const [selectedLeaveToCancel, setSelectedLeaveToCancel] = useState<LeaveItem | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState("");
@@ -32,8 +58,8 @@ export default function HistoryTabs({ leaves, leaveIncrements }: { leaves: any[]
       setSelectedLeaveToCancel(null);
       setCancellationReason("");
       router.refresh();
-    } catch (err: any) {
-      setActionError(err.message);
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
