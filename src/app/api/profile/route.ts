@@ -30,7 +30,7 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    revalidateTag("profile");
+    revalidateTag("profile", "max");
     return NextResponse.json(updatedProfile);
   } catch (error) {
     console.error(error);

@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    revalidateTag("profile");
+    revalidateTag("profile", "max");
     return NextResponse.json(leave);
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });

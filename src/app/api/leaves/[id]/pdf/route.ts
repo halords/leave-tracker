@@ -175,6 +175,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     // Automatically check for approval
     try { form.getCheckBox("appr").check(); } catch (e) { console.warn(e); }
 
+    // If leave is cancelled, draw a prominent CANCELLED watermark on the document
+    if (leave.status === "CANCELLED") {
+      page.drawText("CANCELLED", {
+        x: 180,
+        y: 400,
+        size: 48,
+        font: helveticaBold,
+        color: rgb(0.85, 0.15, 0.15),
+        opacity: 0.35,
+        rotate: { angle: 35, type: 0 as any },
+      });
+    }
+
     // Flatten the form
     form.flatten();
     

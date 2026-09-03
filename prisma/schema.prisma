@@ -37,16 +37,19 @@ model Profile {
 }
 
 model Leave {
-  id           String   @id @default(cuid())
-  profileId    String
-  profile      Profile  @relation(fields: [profileId], references: [id])
-  leaveType    String   // 'Vacation', 'Sick', 'Forced', 'SPL', etc.
-  workingDays    Int
-  datesApplied   String   // e.g. "July 5-7, 2026"
-  leaveDetails   String?  // 'inpatient', 'outpatient', 'within', 'abroad'
-  isMonetization Boolean  @default(false)
-  dateFiled      DateTime @default(now())
-  createdAt      DateTime @default(now())
+  id                 String    @id @default(cuid())
+  profileId          String
+  profile            Profile   @relation(fields: [profileId], references: [id])
+  leaveType          String    // 'Vacation', 'Sick', 'Forced', 'SPL', etc.
+  workingDays        Int
+  datesApplied       String    // e.g. "July 5-7, 2026"
+  leaveDetails       String?   // 'inpatient', 'outpatient', 'within', 'abroad'
+  isMonetization     Boolean   @default(false)
+  status             String    @default("ACTIVE") // 'ACTIVE', 'CANCELLED'
+  cancelledAt        DateTime?
+  cancellationReason String?
+  dateFiled          DateTime  @default(now())
+  createdAt          DateTime  @default(now())
 }
 
 model LeaveIncrement {
