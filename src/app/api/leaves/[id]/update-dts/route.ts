@@ -41,7 +41,7 @@ export async function POST(
       },
     });
 
-    revalidateTag("profile");
+    revalidateTag("profile", "max");
 
     return NextResponse.json({ success: true, leave: updatedLeave });
   } catch (error: any) {
