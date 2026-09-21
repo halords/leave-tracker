@@ -32,7 +32,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([612, 792]); // Letter size in points (8.5 x 11 inches)
+    // A4 size in points: 595.28 x 841.89 (210 x 297 mm)
+    const pageWidth = 595.28;
+    const pageHeight = 841.89;
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
     
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -64,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const qrCodeImage = await pdfDoc.embedPng(qrCodeBuffer);
     
     // We invert Y coordinates because pdf-lib origin is bottom-left, while jsPDF is top-left
-    const height = 792;
+    const height = pageHeight;
     
     offsets.forEach((offset, idx) => {
         // Receipt Title (Above Logo)
@@ -79,8 +82,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             height: logoDims.height,
         });
         
-        // Draw grid lines
-        const drawHLine = (y: number) => page.drawLine({ start: { x: 20, y: height - y }, end: { x: 592, y: height - y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
+        // Draw grid lines (fits A4 width 595.28 pt with ~15pt margins)
+        const leftX = 15;
+        const rightX = 580;
+        const drawHLine = (y: number) => page.drawLine({ start: { x: leftX, y: height - y }, end: { x: rightX, y: height - y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
         const drawVLine = (x: number, y1: number, y2: number) => page.drawLine({ start: { x, y: height - y1 }, end: { x, y: height - y2 }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
         
         const topY = 125 + offset;
@@ -88,31 +93,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         
         [125, 155, 185, 215, 245].forEach(y => drawHLine(y + offset));
         
-        drawVLine(20, topY, bottomY);
-        drawVLine(592, topY, bottomY);
-        drawVLine(130, topY, bottomY);
-        drawVLine(249, 185 + offset, bottomY);
-        drawVLine(360, 185 + offset, bottomY);
-        drawVLine(478, 185 + offset, bottomY);
-        drawVLine(520, 185 + offset, bottomY);
+        drawVLine(leftX, topY, bottomY);
+        drawVLine(rightX, topY, bottomY);
+        drawVLine(125, topY, bottomY);
+        drawVLine(245, 185 + offset, bottomY);
+        drawVLine(355, 185 + offset, bottomY);
+        drawVLine(470, 185 + offset, bottomY);
+        drawVLine(515, 185 + offset, bottomY);
         
-        drawVLine(360, 125 + offset, 155 + offset);
-        drawVLine(478, 125 + offset, 155 + offset);
+        drawVLine(355, 125 + offset, 155 + offset);
+        drawVLine(470, 125 + offset, 155 + offset);
         
         // Grid Labels
         const drawLabel = (text: string, x: number, y: number) => {
             page.drawText(text, { x, y: height - (y + offset), size: 9, font: helvetica, color: rgb(0.5, 0.5, 0.5) });
         };
         
-        drawLabel("TRANSACTION NO.", 25, 144);
-        drawLabel("TRANSACTION", 365, 144);
-        drawLabel("SUBJECT", 25, 174);
-        drawLabel("RECEIVING OFFICE", 25, 204);
-        drawLabel("ORIGINATING OFFICE", 254, 204);
-        drawLabel("DATE", 483, 204);
-        drawLabel("COMMUNICATION", 25, 234);
-        drawLabel("DOCUMENT TYPE", 254, 234);
-        drawLabel("TIME", 483, 234);
+        drawLabel("TRANSACTION NO.", 20, 144);
+        drawLabel("TRANSACTION", 360, 144);
+        drawLabel("SUBJECT", 20, 174);
+        drawLabel("RECEIVING OFFICE", 20, 204);
+        drawLabel("ORIGINATING OFFICE", 250, 204);
+        drawLabel("DATE", 475, 204);
+        drawLabel("COMMUNICATION", 20, 234);
+        drawLabel("DOCUMENT TYPE", 250, 234);
+        drawLabel("TIME", 475, 234);
         
         // Grid Values
         const drawValue = (text: string, x: number, y: number, maxW?: number) => {
@@ -124,23 +129,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             page.drawText(displayTxt || "", { x, y: height - (y + offset), size: 9, font: helvetica, color: rgb(0.1, 0.1, 0.1) });
         };
         
-        drawValue(leave.dtsTransactionNo!, 135, 144);
-        drawValue("Simple", 483, 144);
-        drawValue(subject, 135, 174, 420);
+        drawValue(leave.dtsTransactionNo!, 130, 144);
+        drawValue("Simple", 475, 144);
+        drawValue(subject, 130, 174, 420);
         
-        drawValue("OPA", 135, 204); // Using OPA as requested
-        drawValue("ASMU", 365, 204);
-        drawValue(dateStr, 525, 204);
+        drawValue("OPA", 130, 204); // Using OPA as requested
+        drawValue("ASMU", 360, 204);
+        drawValue(dateStr, 520, 204);
         
-        drawValue("To Internal", 135, 234);
-        drawValue("LEAVE", 365, 234);
-        drawValue(timeStr, 525, 234);
+        drawValue("To Internal", 130, 234);
+        drawValue("LEAVE", 360, 234);
+        drawValue(timeStr, 520, 234);
         
         // QR Code Image and Text
         // Matches the original DTS layout: 80pt square QR code aligned with table's right area
         // Height aligns nicely with the header title (top ~ 30), bottom at 110, text at 119, leaving clean 4-5pt space before table top line (125)
         const qrSize = 80;
-        const qrX = 505;
+        const qrX = 495;
         page.drawImage(qrCodeImage, {
             x: qrX,
             y: height - (110 + offset), // Top of QR at ~ 30+offset, bottom at 110+offset
@@ -155,7 +160,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         
         // Divider
         if (offset < 510) {
-            page.drawLine({ start: { x: 0, y: height - (255 + offset) }, end: { x: 612, y: height - (255 + offset) }, thickness: 1, color: rgb(0, 0, 0) });
+            page.drawLine({ start: { x: 0, y: height - (255 + offset) }, end: { x: pageWidth, y: height - (255 + offset) }, thickness: 1, color: rgb(0, 0, 0) });
         }
     });
 
