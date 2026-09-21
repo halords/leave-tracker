@@ -132,8 +132,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
     
     if (finalLeaveDetails) {
-      const checkboxToMap = finalLeaveDetails === "abroad" ? "outside" : finalLeaveDetails;
+      let isAbroad = false;
+      let abroadSpec = "";
+      
+      if (finalLeaveDetails.startsWith("abroad:")) {
+        isAbroad = true;
+        abroadSpec = finalLeaveDetails.replace("abroad:", "").trim();
+      } else if (finalLeaveDetails === "abroad") {
+        isAbroad = true;
+      }
+
+      const checkboxToMap = isAbroad ? "outside" : finalLeaveDetails;
       try { form.getCheckBox(checkboxToMap).check(); } catch (e) { console.warn("Failed to check", checkboxToMap, e); }
+
+      if (isAbroad && abroadSpec) {
+        // In the PDF template, the text field next to 'Abroad (Specify)' is named 'Within the Philippines'
+        try {
+          form.getTextField("Within the Philippines").setText(abroadSpec);
+        } catch (e) {
+          console.warn("Failed to set Abroad specification text field", e);
+        }
+      }
     }
 
     if (checkboxName) {

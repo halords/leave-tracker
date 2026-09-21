@@ -22,6 +22,7 @@ export default function LeaveFormModal({ profile }: { profile: LeaveProfile }) {
     startDate: "",
     endDate: "",
     leaveDetails: "within",
+    abroadLocation: "",
     isMonetization: false,
   });
 
@@ -36,6 +37,7 @@ export default function LeaveFormModal({ profile }: { profile: LeaveProfile }) {
       ...prev,
       leaveType: newType,
       leaveDetails: newDetails,
+      abroadLocation: "",
     }));
   };
 
@@ -106,8 +108,13 @@ export default function LeaveFormModal({ profile }: { profile: LeaveProfile }) {
       }
     }
 
+    const finalDetails = formData.leaveDetails === "abroad" && formData.abroadLocation.trim()
+      ? `abroad:${formData.abroadLocation.trim()}`
+      : formData.leaveDetails;
+
     const payload = {
       ...formData,
+      leaveDetails: finalDetails,
       isMonetization: formData.isMonetization || formData.leaveType === "Monetization",
       profileId: profile.id,
       datesApplied,
@@ -128,6 +135,7 @@ export default function LeaveFormModal({ profile }: { profile: LeaveProfile }) {
         startDate: "",
         endDate: "",
         leaveDetails: "within",
+        abroadLocation: "",
         isMonetization: false,
       });
       router.refresh();
@@ -239,8 +247,8 @@ export default function LeaveFormModal({ profile }: { profile: LeaveProfile }) {
               )}
 
               {!formData.isMonetization && ["Vacation", "Special Privilege", "Wellness", "Mandatory/Forced"].includes(formData.leaveType) && (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Location Context</label>
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">Location Context</label>
                   <div className="flex space-x-6">
                     <label className="flex items-center space-x-2">
                       <input type="radio" name="context" value="within" 
@@ -257,6 +265,20 @@ export default function LeaveFormModal({ profile }: { profile: LeaveProfile }) {
                       <span className="text-sm text-slate-700">Abroad</span>
                     </label>
                   </div>
+
+                  {formData.leaveDetails === "abroad" && (
+                    <div className="pt-1">
+                      <label className="block text-xs font-medium text-slate-500 mb-1">Specify Destination / Country (Abroad)</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g., Japan, Singapore, USA"
+                        className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        value={formData.abroadLocation}
+                        onChange={(e) => setFormData({ ...formData, abroadLocation: e.target.value })}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

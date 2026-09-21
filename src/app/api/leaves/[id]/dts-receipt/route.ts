@@ -58,8 +58,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const dateStr = dateSubmitted.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     const timeStr = dateSubmitted.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     
-    // Generate QR Code image buffer
-    const qrCodeBuffer = await QRCode.toBuffer(leave.dtsQrCode!);
+    // Generate QR Code image buffer with full DTS tracking link
+    const qrUrl = `https://dts.launion.gov.ph/qr/${leave.dtsQrCode!}`;
+    const qrCodeBuffer = await QRCode.toBuffer(qrUrl, { margin: 0, errorCorrectionLevel: 'M' });
     const qrCodeImage = await pdfDoc.embedPng(qrCodeBuffer);
     
     // We invert Y coordinates because pdf-lib origin is bottom-left, while jsPDF is top-left
@@ -136,18 +137,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         drawValue(timeStr, 525, 234);
         
         // QR Code Image and Text
-        const qrSize = 85;
-        const qrX = 500;
+        // Matches the original DTS layout: 80pt square QR code aligned with table's right area
+        // Height aligns nicely with the header title (top ~ 30), bottom at 110, text at 119, leaving clean 4-5pt space before table top line (125)
+        const qrSize = 80;
+        const qrX = 505;
         page.drawImage(qrCodeImage, {
             x: qrX,
-            y: height - (115 + offset), // Align bottom with bottom of logo
+            y: height - (110 + offset), // Top of QR at ~ 30+offset, bottom at 110+offset
             width: qrSize,
             height: qrSize,
         });
         
         const qrTextWidth = helvetica.widthOfTextAtSize(leave.dtsQrCode!, 9);
         const qrTextX = qrX + (qrSize / 2) - (qrTextWidth / 2);
-        page.drawText(leave.dtsQrCode!, { x: qrTextX, y: height - (124 + offset), size: 9, font: helvetica, color: rgb(0.1, 0.1, 0.1) });
+        // Text baseline at 119 leaves 4pt space above the table border at 125
+        page.drawText(leave.dtsQrCode!, { x: qrTextX, y: height - (119 + offset), size: 9, font: helvetica, color: rgb(0.1, 0.1, 0.1) });
         
         // Divider
         if (offset < 510) {
