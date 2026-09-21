@@ -42,8 +42,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const logoBytes = fs.readFileSync(logoPath);
     const logoImage = await pdfDoc.embedPng(logoBytes);
     
-    // Scale logo to fit reasonably (e.g. 40px height)
-    const logoDims = logoImage.scaleToFit(200, 40);
+    // Scale logo to match original size
+    const logoDims = logoImage.scaleToFit(300, 75);
     
     // Draw the receipt 3 times on the page (Office, Receiving, Receiving)
     // Based on the DTS offset logic (0, 255, 510)
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const subject = generateDtsSubject(fullName, leave.leaveType, leave.datesApplied, leave.workingDays);
     
     const dateSubmitted = leave.dtsSubmittedAt ? new Date(leave.dtsSubmittedAt) : new Date();
-    const dateStr = dateSubmitted.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const dateStr = dateSubmitted.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     const timeStr = dateSubmitted.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     
     // Generate QR Code image buffer
@@ -66,17 +66,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const height = 792;
     
     offsets.forEach((offset, idx) => {
+        // Receipt Title (Above Logo)
+        page.drawText("RECEIPT", { x: 25, y: height - (30 + offset), size: 10, font: helvetica, color: rgb(0.3, 0.3, 0.3) });
+        page.drawText(titles[idx], { x: 72, y: height - (30 + offset), size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
+
         // Draw Logo Image
         page.drawImage(logoImage, {
-            x: 20,
-            y: height - (75 + offset), // Lowered slightly
+            x: 25,
+            y: height - (115 + offset), // Bottom aligned just above the grid
             width: logoDims.width,
             height: logoDims.height,
         });
-        
-        // Receipt Title
-        page.drawText("RECEIPT", { x: 25, y: height - (30 + offset), size: 10, font: helvetica, color: rgb(0.3, 0.3, 0.3) });
-        page.drawText(titles[idx], { x: 72, y: height - (30 + offset), size: 10, font: helveticaBold, color: rgb(0, 0, 0) });
         
         // Draw grid lines
         const drawHLine = (y: number) => page.drawLine({ start: { x: 20, y: height - y }, end: { x: 592, y: height - y }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
@@ -136,13 +136,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         drawValue(timeStr, 525, 234);
         
         // QR Code Image and Text
+        const qrSize = 85;
+        const qrX = 500;
         page.drawImage(qrCodeImage, {
-            x: 485, // align to right side above text
-            y: height - (115 + offset),
-            width: 45,
-            height: 45,
+            x: qrX,
+            y: height - (115 + offset), // Align bottom with bottom of logo
+            width: qrSize,
+            height: qrSize,
         });
-        page.drawText(leave.dtsQrCode!, { x: 460, y: height - (121 + offset), size: 9, font: helvetica, color: rgb(0.1, 0.1, 0.1) });
+        
+        const qrTextWidth = helvetica.widthOfTextAtSize(leave.dtsQrCode!, 9);
+        const qrTextX = qrX + (qrSize / 2) - (qrTextWidth / 2);
+        page.drawText(leave.dtsQrCode!, { x: qrTextX, y: height - (124 + offset), size: 9, font: helvetica, color: rgb(0.1, 0.1, 0.1) });
         
         // Divider
         if (offset < 510) {
