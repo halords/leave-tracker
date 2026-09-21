@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
+import fs from "fs";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
     
+    // Load and embed the logo image
+    const logoPath = path.join(process.cwd(), "public", "dts-logo.png");
+    const logoBytes = fs.readFileSync(logoPath);
+    const logoImage = await pdfDoc.embedPng(logoBytes);
+    
+    // Scale logo to fit reasonably (e.g. 40px height)
+    const logoDims = logoImage.scaleToFit(200, 40);
+    
     // Draw the receipt 3 times on the page (Office, Receiving, Receiving)
     // Based on the DTS offset logic (0, 255, 510)
     const offsets = [0, 255, 510];
@@ -50,20 +60,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const height = 792;
     
     offsets.forEach((offset, idx) => {
-        // Draw Logo Placeholder
-        page.drawText("PROVINCIAL GOVERNMENT OF LA UNION", {
-            x: 50,
-            y: height - (60 + offset),
-            size: 14,
-            font: helveticaBold,
-            color: rgb(0, 0, 0),
-        });
-        page.drawText("Document Tracking System", {
-            x: 50,
-            y: height - (75 + offset),
-            size: 10,
-            font: helvetica,
-            color: rgb(0.3, 0.3, 0.3),
+        // Draw Logo Image
+        page.drawImage(logoImage, {
+            x: 20,
+            y: height - (65 + offset),
+            width: logoDims.width,
+            height: logoDims.height,
         });
         
         // Receipt Title

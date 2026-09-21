@@ -50,6 +50,7 @@ next-env.d.ts
 
 # scripts
 /scripts/
+/scratch/
 
 # markdown files
 *.md
