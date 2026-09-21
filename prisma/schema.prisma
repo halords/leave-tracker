@@ -49,6 +49,10 @@ model Leave {
   cancelledAt        DateTime?
   cancellationReason String?
   dateFiled          DateTime  @default(now())
+  dtsDocumentId      Int?
+  dtsTransactionNo   String?
+  dtsQrCode          String?
+  dtsSubmittedAt     DateTime?
   createdAt          DateTime  @default(now())
 }
 

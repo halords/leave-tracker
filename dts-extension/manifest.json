@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "DTS Bridge for Leave Tracker",
+  "version": "1.0",
+  "description": "Bridges the Leave Tracker app with the Document Tracking System (DTS).",
+  "permissions": [
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://dts.launion.gov.ph/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/*"
+      ],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_title": "DTS Bridge"
+  }
+}

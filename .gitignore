@@ -54,3 +54,21 @@ next-env.d.ts
 # markdown files
 *.md
 !README.md
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# IDEs and Editors
+.vscode/
+.idea/
+
+# Temporary and reverse-engineering files
+dts_*.json
+dts_*.html
+dts_*.js
+dts_cookies.txt
+view_body.json
+dts_comm_ctrl.js
+dts_comm_module.js
+dts_account.js

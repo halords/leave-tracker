@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { submitLeaveToDts } from "@/lib/dts-client";
 
 interface LeaveItem {
   id: string;
@@ -13,6 +14,9 @@ interface LeaveItem {
   isMonetization: boolean;
   status: string;
   cancellationReason?: string | null;
+  dtsDocumentId?: number | null;
+  dtsTransactionNo?: string | null;
+  dtsQrCode?: string | null;
 }
 
 interface LeaveIncrementItem {
@@ -37,6 +41,50 @@ export default function HistoryTabs({
   const [cancellationReason, setCancellationReason] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [dtsLoadingId, setDtsLoadingId] = useState<string | null>(null);
+
+  const handleDtsSubmit = async (leave: LeaveItem) => {
+    setDtsLoadingId(leave.id);
+    setActionError("");
+
+    try {
+      const p = await fetch("/api/auth/session").then(r => r.json());
+      const user = p?.user;
+      
+      const response = await submitLeaveToDts({
+        leaveId: leave.id,
+        doc_name: `${user?.name || "User"} - ${leave.leaveType.substring(0, 3).toUpperCase()} - ${leave.datesApplied}`,
+        document_date: new Date(leave.dateFiled).toISOString(),
+      });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.error || "Failed to submit to DTS");
+      }
+
+      // Save to database
+      const saveRes = await fetch(`/api/leaves/${leave.id}/update-dts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          dtsDocumentId: response.data.dtsDocumentId,
+          dtsTransactionNo: response.data.dtsTransactionNo,
+          dtsQrCode: response.data.dtsQrCode,
+        }),
+      });
+
+      if (!saveRes.ok) {
+        throw new Error("Submitted to DTS, but failed to save in local database");
+      }
+
+      router.refresh();
+    } catch (err: any) {
+      setActionError(err.message || "An error occurred with DTS submission");
+      // Could show a toast here instead of actionError which is used for the modal
+      alert(`DTS Error: ${err.message}`);
+    } finally {
+      setDtsLoadingId(null);
+    }
+  };
 
   const handleCancelLeave = async () => {
     if (!selectedLeaveToCancel) return;
@@ -163,12 +211,30 @@ export default function HistoryTabs({
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex flex-wrap items-center justify-end gap-2 max-w-[200px]">
+                          {!isCancelled && !leave.dtsDocumentId && (
+                            <button
+                              onClick={() => handleDtsSubmit(leave)}
+                              disabled={dtsLoadingId === leave.id}
+                              className="inline-flex items-center justify-center px-3.5 py-1.5 bg-amber-50 text-amber-600 rounded-lg text-sm font-semibold hover:bg-amber-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                            >
+                              {dtsLoadingId === leave.id ? "Submitting..." : "Submit to DTS"}
+                            </button>
+                          )}
+                          {!isCancelled && leave.dtsDocumentId && (
+                            <Link 
+                              href={`/api/leaves/${leave.id}/dts-receipt`}
+                              target="_blank"
+                              className="inline-flex items-center justify-center px-3.5 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-semibold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                            >
+                              DTS Receipt
+                            </Link>
+                          )}
                           <Link 
                             href={`/dashboard/print/${leave.id}`}
                             className="inline-flex items-center justify-center px-3.5 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                           >
-                            Print PDF
+                            Print Form 6
                           </Link>
                           {!isCancelled && (
                             <button
