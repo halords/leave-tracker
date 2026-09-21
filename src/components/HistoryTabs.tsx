@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { submitLeaveToDts } from "@/lib/dts-client";
+import { submitLeaveToDts, generateDtsSubject } from "@/lib/dts-client";
 
 interface LeaveItem {
   id: string;
@@ -53,7 +53,7 @@ export default function HistoryTabs({
       
       const response = await submitLeaveToDts({
         leaveId: leave.id,
-        doc_name: `${user?.name || "User"} - ${leave.leaveType.substring(0, 3).toUpperCase()} - ${leave.datesApplied}`,
+        doc_name: generateDtsSubject(user?.name || "User", leave.leaveType, leave.datesApplied, leave.workingDays),
         document_date: new Date(leave.dateFiled).toISOString(),
       });
 

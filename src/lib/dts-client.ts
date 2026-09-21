@@ -4,6 +4,13 @@ export interface DtsSubmitPayload {
   document_date: string; // ISO string or format accepted by DTS
 }
 
+export function generateDtsSubject(fullName: string, leaveType: string, datesApplied: string, workingDays: number) {
+  if (leaveType === "Monetization") {
+    return `${fullName} - Monetization | ${workingDays} days`;
+  }
+  return `${fullName} - ${leaveType} - ${datesApplied}`;
+}
+
 export interface DtsSubmitResponse {
   success: boolean;
   data?: {

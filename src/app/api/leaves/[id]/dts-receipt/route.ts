@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
 import fs from "fs";
 import path from "path";
+import QRCode from "qrcode";
+import { generateDtsSubject } from "@/lib/dts-client";
 
 export const dynamic = "force-dynamic";
 
@@ -50,11 +52,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     
     const p = leave.profile;
     const fullName = p.lastName && p.firstName ? `${p.lastName}, ${p.firstName} ${p.middleName || ''}`.trim() : (p.email || "");
-    const subject = `${fullName} - ${leave.leaveType.substring(0, 3).toUpperCase()} - ${leave.datesApplied}`;
+    const subject = generateDtsSubject(fullName, leave.leaveType, leave.datesApplied, leave.workingDays);
     
     const dateSubmitted = leave.dtsSubmittedAt ? new Date(leave.dtsSubmittedAt) : new Date();
-    const dateStr = dateSubmitted.toLocaleDateString('en-US');
+    const dateStr = dateSubmitted.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const timeStr = dateSubmitted.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    // Generate QR Code image buffer
+    const qrCodeBuffer = await QRCode.toBuffer(leave.dtsQrCode!);
+    const qrCodeImage = await pdfDoc.embedPng(qrCodeBuffer);
     
     // We invert Y coordinates because pdf-lib origin is bottom-left, while jsPDF is top-left
     const height = 792;
@@ -63,7 +69,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         // Draw Logo Image
         page.drawImage(logoImage, {
             x: 20,
-            y: height - (65 + offset),
+            y: height - (75 + offset), // Lowered slightly
             width: logoDims.width,
             height: logoDims.height,
         });
@@ -129,7 +135,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         drawValue("LEAVE", 365, 234);
         drawValue(timeStr, 525, 234);
         
-        // QR Code Text
+        // QR Code Image and Text
+        page.drawImage(qrCodeImage, {
+            x: 485, // align to right side above text
+            y: height - (115 + offset),
+            width: 45,
+            height: 45,
+        });
         page.drawText(leave.dtsQrCode!, { x: 460, y: height - (121 + offset), size: 9, font: helvetica, color: rgb(0.1, 0.1, 0.1) });
         
         // Divider
